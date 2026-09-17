@@ -385,3 +385,29 @@ def test_traffic_curriculum_trainer_workflow(tmp_path: Path) -> None:
     assert (
         tmp_path / "curr_results" / "curriculum" / "test_traffic_curriculum_curriculum.json"
     ).exists()
+
+
+def test_traffic_signal_env_with_evaluator() -> None:
+    """Verify traffic success and queuing telemetry reach evaluation metrics."""
+    env = TrafficSignalEnv(
+        max_steps=5,
+        arrival_rates=(0.0, 0.0, 0.0, 0.0),
+    )
+    env.reset(seed=42)
+    _, _, _, _, step_info = env.step(0)
+    assert step_info["success"] is False
+    for _ in range(4):
+        _, _, _, truncated, step_info = env.step(0)
+    assert truncated is True
+    assert step_info["success"] is True
+
+    algo = PPOAlgorithm(env=env, n_steps=8, batch_size=4, seed=42)
+    evaluator = Evaluator(algorithm=algo, env=env)
+
+    metrics = evaluator.evaluate(num_episodes=2, deterministic=True, base_seed=100)
+
+    assert metrics.success_rate == 1.0
+    assert metrics.additional_metrics["mean_queue_length"] == 0.0
+    assert metrics.additional_metrics["max_wait_time"] == 0.0
+    assert metrics.additional_metrics["total_departures"] == 0.0
+    env.close()

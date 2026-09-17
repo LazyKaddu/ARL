@@ -273,6 +273,7 @@ class TrafficSignalEnv(AdaptiveRLEnv[np.ndarray, int]):
         info["step_arrivals"] = telemetry.total_arrivals
         info["overflow"] = telemetry.overflow
         info["premature_switch"] = was_premature
+        info["success"] = bool(truncated and not telemetry.overflow)
 
         if self.render_mode == "human":
             print(self.render())

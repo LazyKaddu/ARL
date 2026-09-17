@@ -95,6 +95,9 @@ class Evaluator(BaseEvaluator):
 
         rewards: List[float] = []
         lengths: List[int] = []
+        episode_queue_means: List[float] = []
+        episode_max_waits: List[float] = []
+        episode_departures: List[float] = []
         successes = 0
         collisions = 0
 
@@ -107,6 +110,10 @@ class Evaluator(BaseEvaluator):
 
             ep_success = False
             ep_collision = False
+            step_queues: List[float] = []
+            step_waits: List[float] = []
+            step_departures: List[float] = []
+
 
             while not done:
                 action, _ = self.algorithm.predict(obs, deterministic=deterministic)
@@ -118,11 +125,25 @@ class Evaluator(BaseEvaluator):
                     ep_success = True
                 if step_info.get("collision", False):
                     ep_collision = True
+                if "total_queue" in step_info:
+                    step_queues.append(float(step_info["total_queue"]))
+                if "max_wait" in step_info:
+                    step_waits.append(float(step_info["max_wait"]))
+                if "step_departures" in step_info:
+                    step_departures.append(float(step_info["step_departures"]))
 
                 done = terminated or truncated
 
             rewards.append(ep_reward)
             lengths.append(ep_length)
+            
+            if step_queues:
+                episode_queue_means.append(float(np.mean(step_queues)))
+            if step_waits:
+                episode_max_waits.append(float(np.max(step_waits)))
+            if step_departures:
+                episode_departures.append(float(np.sum(step_departures)))
+
             if ep_success:
                 successes += 1
             if ep_collision:
@@ -150,6 +171,15 @@ class Evaluator(BaseEvaluator):
                 "all_lengths": lengths,
                 "deterministic": deterministic,
                 "base_seed": base_seed,
+                "mean_queue_length": float(np.mean(episode_queue_means))
+                if episode_queue_means
+                else 0.0,
+                "max_wait_time": float(np.max(episode_max_waits))
+                if episode_max_waits
+                else 0.0,
+                "total_departures": float(np.mean(episode_departures))
+                if episode_departures
+                else 0.0,
             },
         )
 
