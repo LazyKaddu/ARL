@@ -123,8 +123,8 @@ training:
   log_interval: 10
 evaluation:
   eval_episodes: 2
-output_dir: "{tmp_path / "artifacts"}"
-log_dir: "{tmp_path / "logs"}"
+output_dir: "{(tmp_path / 'artifacts').as_posix()}"
+log_dir: "{(tmp_path / 'logs').as_posix()}"
 """,
         encoding="utf-8",
     )
@@ -228,8 +228,8 @@ training:
   log_interval: 10
 evaluation:
   eval_episodes: 2
-output_dir: "{tmp_path / "artifacts"}"
-log_dir: "{tmp_path / "logs"}"
+output_dir: "{(tmp_path / 'artifacts').as_posix()}"
+log_dir: "{(tmp_path / 'logs').as_posix()}"
 """,
         encoding="utf-8",
     )
